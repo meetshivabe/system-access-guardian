@@ -1,0 +1,211 @@
+
+import { useState } from "react";
+import { Lock, LockOpen, Plus, Server, Clock, User } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { formatDistanceToNow } from "date-fns";
+
+interface SubSystem {
+  id: string;
+  name: string;
+  isLocked: boolean;
+  lockedBy: string | null;
+  lockedAt: Date | null;
+}
+
+interface System {
+  id: string;
+  name: string;
+  description: string;
+  isLocked: boolean;
+  lockedBy: string | null;
+  lockedAt: Date | null;
+  subsystems: SubSystem[];
+}
+
+interface SystemCardProps {
+  system: System;
+  currentUser: string;
+  onLockSystem: (systemId: string, isSubsystem?: boolean, parentId?: string) => void;
+  onAddSubsystem: (systemId: string, subsystemName: string) => void;
+}
+
+const SystemCard = ({ system, currentUser, onLockSystem, onAddSubsystem }: SystemCardProps) => {
+  const [showAddSubsystem, setShowAddSubsystem] = useState(false);
+  const [subsystemName, setSubsystemName] = useState("");
+
+  const handleAddSubsystem = () => {
+    if (subsystemName.trim()) {
+      onAddSubsystem(system.id, subsystemName.trim());
+      setSubsystemName("");
+      setShowAddSubsystem(false);
+    }
+  };
+
+  const getStatusColor = (isLocked: boolean, lockedBy: string | null) => {
+    if (!isLocked) return "bg-green-100 text-green-800 border-green-200";
+    if (lockedBy === currentUser) return "bg-blue-100 text-blue-800 border-blue-200";
+    return "bg-red-100 text-red-800 border-red-200";
+  };
+
+  const getStatusText = (isLocked: boolean, lockedBy: string | null) => {
+    if (!isLocked) return "Available";
+    if (lockedBy === currentUser) return "Locked by You";
+    return "Locked";
+  };
+
+  return (
+    <Card className="hover:shadow-lg transition-all duration-300 border-2 hover:border-blue-200">
+      <CardHeader className="pb-3">
+        <div className="flex items-start justify-between">
+          <div className="flex items-center gap-2">
+            <Server className="h-5 w-5 text-blue-600" />
+            <CardTitle className="text-lg font-semibold text-slate-800">
+              {system.name}
+            </CardTitle>
+          </div>
+          <Badge 
+            variant="outline" 
+            className={`${getStatusColor(system.isLocked, system.lockedBy)} font-medium`}
+          >
+            {getStatusText(system.isLocked, system.lockedBy)}
+          </Badge>
+        </div>
+        <p className="text-sm text-slate-600 mt-1">{system.description}</p>
+        
+        {system.isLocked && system.lockedBy && system.lockedAt && (
+          <div className="flex items-center gap-2 text-xs text-slate-500 mt-2">
+            <User className="h-3 w-3" />
+            <span>{system.lockedBy}</span>
+            <Clock className="h-3 w-3 ml-2" />
+            <span>{formatDistanceToNow(system.lockedAt, { addSuffix: true })}</span>
+          </div>
+        )}
+      </CardHeader>
+
+      <CardContent className="space-y-4">
+        <Button
+          onClick={() => onLockSystem(system.id)}
+          className={`w-full ${
+            system.isLocked && system.lockedBy !== currentUser
+              ? "bg-red-600 hover:bg-red-700"
+              : system.isLocked && system.lockedBy === currentUser
+              ? "bg-blue-600 hover:bg-blue-700"
+              : "bg-green-600 hover:bg-green-700"
+          } text-white transition-colors`}
+          disabled={system.isLocked && system.lockedBy !== currentUser}
+        >
+          {system.isLocked ? (
+            <>
+              <Lock className="mr-2 h-4 w-4" />
+              {system.lockedBy === currentUser ? "Unlock System" : "Locked"}
+            </>
+          ) : (
+            <>
+              <LockOpen className="mr-2 h-4 w-4" />
+              Lock System
+            </>
+          )}
+        </Button>
+
+        {system.subsystems.length > 0 && (
+          <div className="space-y-2">
+            <h4 className="text-sm font-medium text-slate-700 flex items-center gap-2">
+              <span>Subsystems ({system.subsystems.length}/8)</span>
+            </h4>
+            <div className="space-y-2">
+              {system.subsystems.map((subsystem) => (
+                <div
+                  key={subsystem.id}
+                  className="flex items-center justify-between p-2 bg-slate-50 rounded-lg border"
+                >
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-slate-700">
+                        {subsystem.name}
+                      </span>
+                      <Badge 
+                        variant="outline" 
+                        className={`text-xs ${getStatusColor(subsystem.isLocked, subsystem.lockedBy)}`}
+                      >
+                        {getStatusText(subsystem.isLocked, subsystem.lockedBy)}
+                      </Badge>
+                    </div>
+                    {subsystem.isLocked && subsystem.lockedBy && subsystem.lockedAt && (
+                      <div className="flex items-center gap-1 text-xs text-slate-500 mt-1">
+                        <User className="h-3 w-3" />
+                        <span>{subsystem.lockedBy}</span>
+                        <Clock className="h-3 w-3 ml-1" />
+                        <span>{formatDistanceToNow(subsystem.lockedAt, { addSuffix: true })}</span>
+                      </div>
+                    )}
+                  </div>
+                  <Button
+                    size="sm"
+                    variant={subsystem.isLocked && subsystem.lockedBy !== currentUser ? "destructive" : "outline"}
+                    onClick={() => onLockSystem(subsystem.id, true, system.id)}
+                    disabled={subsystem.isLocked && subsystem.lockedBy !== currentUser}
+                    className="ml-2"
+                  >
+                    {subsystem.isLocked ? (
+                      subsystem.lockedBy === currentUser ? (
+                        <LockOpen className="h-3 w-3" />
+                      ) : (
+                        <Lock className="h-3 w-3" />
+                      )
+                    ) : (
+                      <LockOpen className="h-3 w-3" />
+                    )}
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {system.subsystems.length < 8 && (
+          <div className="space-y-2">
+            {!showAddSubsystem ? (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowAddSubsystem(true)}
+                className="w-full border-dashed"
+              >
+                <Plus className="mr-2 h-3 w-3" />
+                Add Subsystem
+              </Button>
+            ) : (
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Subsystem name"
+                  value={subsystemName}
+                  onChange={(e) => setSubsystemName(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleAddSubsystem()}
+                  className="flex-1"
+                />
+                <Button size="sm" onClick={handleAddSubsystem}>
+                  Add
+                </Button>
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  onClick={() => {
+                    setShowAddSubsystem(false);
+                    setSubsystemName("");
+                  }}
+                >
+                  Cancel
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
+
+export default SystemCard;
