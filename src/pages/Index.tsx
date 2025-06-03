@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -156,6 +155,46 @@ const Index = () => {
     );
   };
 
+  const handleDeleteSystem = (systemId: string) => {
+    setSystems(prevSystems => {
+      const systemToDelete = prevSystems.find(system => system.id === systemId);
+      const updatedSystems = prevSystems.filter(system => system.id !== systemId);
+      
+      if (systemToDelete) {
+        toast({
+          title: "System Deleted",
+          description: `${systemToDelete.name} has been permanently deleted.`,
+        });
+      }
+      
+      return updatedSystems;
+    });
+  };
+
+  const handleDeleteSubsystem = (systemId: string, subsystemId: string) => {
+    setSystems(prevSystems => 
+      prevSystems.map(system => {
+        if (system.id === systemId) {
+          const subsystemToDelete = system.subsystems.find(sub => sub.id === subsystemId);
+          const updatedSubsystems = system.subsystems.filter(sub => sub.id !== subsystemId);
+          
+          if (subsystemToDelete) {
+            toast({
+              title: "Subsystem Deleted",
+              description: `${subsystemToDelete.name} has been permanently deleted.`,
+            });
+          }
+          
+          return {
+            ...system,
+            subsystems: updatedSubsystems
+          };
+        }
+        return system;
+      })
+    );
+  };
+
   const handleAddSystem = (name: string, description: string) => {
     const newSystem: System = {
       id: Date.now().toString(),
@@ -244,6 +283,8 @@ const Index = () => {
               currentUser={currentUser}
               onLockSystem={handleLockSystem}
               onAddSubsystem={handleAddSubsystem}
+              onDeleteSystem={handleDeleteSystem}
+              onDeleteSubsystem={handleDeleteSubsystem}
             />
           ))}
         </div>

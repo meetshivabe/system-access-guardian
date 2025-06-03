@@ -1,11 +1,22 @@
 
 import { useState } from "react";
-import { Lock, LockOpen, Plus, Server, Clock, User } from "lucide-react";
+import { Lock, LockOpen, Plus, Server, Clock, User, Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { formatDistanceToNow } from "date-fns";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface SubSystem {
   id: string;
@@ -30,9 +41,18 @@ interface SystemCardProps {
   currentUser: string;
   onLockSystem: (systemId: string, isSubsystem?: boolean, parentId?: string) => void;
   onAddSubsystem: (systemId: string, subsystemName: string) => void;
+  onDeleteSystem: (systemId: string) => void;
+  onDeleteSubsystem: (systemId: string, subsystemId: string) => void;
 }
 
-const SystemCard = ({ system, currentUser, onLockSystem, onAddSubsystem }: SystemCardProps) => {
+const SystemCard = ({ 
+  system, 
+  currentUser, 
+  onLockSystem, 
+  onAddSubsystem, 
+  onDeleteSystem, 
+  onDeleteSubsystem 
+}: SystemCardProps) => {
   const [showAddSubsystem, setShowAddSubsystem] = useState(false);
   const [subsystemName, setSubsystemName] = useState("");
 
@@ -66,12 +86,38 @@ const SystemCard = ({ system, currentUser, onLockSystem, onAddSubsystem }: Syste
               {system.name}
             </CardTitle>
           </div>
-          <Badge 
-            variant="outline" 
-            className={`${getStatusColor(system.isLocked, system.lockedBy)} font-medium`}
-          >
-            {getStatusText(system.isLocked, system.lockedBy)}
-          </Badge>
+          <div className="flex items-center gap-2">
+            <Badge 
+              variant="outline" 
+              className={`${getStatusColor(system.isLocked, system.lockedBy)} font-medium`}
+            >
+              {getStatusText(system.isLocked, system.lockedBy)}
+            </Badge>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete System</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Are you sure you want to delete "{system.name}"? This action cannot be undone and will also delete all subsystems.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction 
+                    onClick={() => onDeleteSystem(system.id)}
+                    className="bg-red-600 hover:bg-red-700"
+                  >
+                    Delete
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
         </div>
         <p className="text-sm text-slate-600 mt-1">{system.description}</p>
         
@@ -142,23 +188,48 @@ const SystemCard = ({ system, currentUser, onLockSystem, onAddSubsystem }: Syste
                       </div>
                     )}
                   </div>
-                  <Button
-                    size="sm"
-                    variant={subsystem.isLocked && subsystem.lockedBy !== currentUser ? "destructive" : "outline"}
-                    onClick={() => onLockSystem(subsystem.id, true, system.id)}
-                    disabled={subsystem.isLocked && subsystem.lockedBy !== currentUser}
-                    className="ml-2"
-                  >
-                    {subsystem.isLocked ? (
-                      subsystem.lockedBy === currentUser ? (
-                        <LockOpen className="h-3 w-3" />
+                  <div className="flex items-center gap-1 ml-2">
+                    <Button
+                      size="sm"
+                      variant={subsystem.isLocked && subsystem.lockedBy !== currentUser ? "destructive" : "outline"}
+                      onClick={() => onLockSystem(subsystem.id, true, system.id)}
+                      disabled={subsystem.isLocked && subsystem.lockedBy !== currentUser}
+                    >
+                      {subsystem.isLocked ? (
+                        subsystem.lockedBy === currentUser ? (
+                          <LockOpen className="h-3 w-3" />
+                        ) : (
+                          <Lock className="h-3 w-3" />
+                        )
                       ) : (
-                        <Lock className="h-3 w-3" />
-                      )
-                    ) : (
-                      <LockOpen className="h-3 w-3" />
-                    )}
-                  </Button>
+                        <LockOpen className="h-3 w-3" />
+                      )}
+                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete Subsystem</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Are you sure you want to delete "{subsystem.name}"? This action cannot be undone.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction 
+                            onClick={() => onDeleteSubsystem(system.id, subsystem.id)}
+                            className="bg-red-600 hover:bg-red-700"
+                          >
+                            Delete
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
                 </div>
               ))}
             </div>
