@@ -1,7 +1,9 @@
-import { useState } from "react";
-import { Plus } from "lucide-react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { Plus, LogOut, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 import SystemCard from "@/components/SystemCard";
 import AddSystemDialog from "@/components/AddSystemDialog";
 import UserSelector from "@/components/UserSelector";
@@ -25,6 +27,8 @@ interface System {
 }
 
 const Index = () => {
+  const { user, loading, isAdmin, signOut } = useAuth();
+  const navigate = useNavigate();
   const [systems, setSystems] = useState<System[]>([
     {
       id: "1",
@@ -69,8 +73,16 @@ const Index = () => {
     }
   ]);
 
-  const [currentUser, setCurrentUser] = useState<string>("current.user@example.com");
+  const [currentUser, setCurrentUser] = useState<string>("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate('/auth');
+    } else if (user) {
+      setCurrentUser(user.email || '');
+    }
+  }, [user, loading, navigate]);
 
   const handleLockSystem = (systemId: string, isSubsystem: boolean = false, parentId?: string) => {
     setSystems(prevSystems => 
@@ -250,6 +262,21 @@ const Index = () => {
     );
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-slate-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null; // Will redirect to auth
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
       <div className="container mx-auto px-4 py-8">
@@ -264,13 +291,35 @@ const Index = () => {
           </div>
           
           <div className="flex flex-col sm:flex-row gap-4 mt-4 md:mt-0">
-            <UserSelector currentUser={currentUser} onUserChange={setCurrentUser} />
+            {user && (
+              <div className="flex items-center gap-2 text-sm text-slate-600 bg-white px-3 py-2 rounded-lg border">
+                <span>Welcome, {user.email}</span>
+              </div>
+            )}
+            {isAdmin && (
+              <Button 
+                onClick={() => navigate('/admin')}
+                variant="outline"
+                className="border-primary text-primary hover:bg-primary hover:text-primary-foreground"
+              >
+                <Shield className="mr-2 h-4 w-4" />
+                Admin Panel
+              </Button>
+            )}
             <Button 
               onClick={() => setIsAddDialogOpen(true)}
-              className="bg-blue-600 hover:bg-blue-700 text-white"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground"
             >
               <Plus className="mr-2 h-4 w-4" />
               Add System
+            </Button>
+            <Button 
+              onClick={signOut}
+              variant="outline"
+              className="border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
+            >
+              <LogOut className="mr-2 h-4 w-4" />
+              Sign Out
             </Button>
           </div>
         </div>
@@ -300,7 +349,7 @@ const Index = () => {
             </p>
             <Button 
               onClick={() => setIsAddDialogOpen(true)}
-              className="bg-blue-600 hover:bg-blue-700 text-white"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground"
             >
               <Plus className="mr-2 h-4 w-4" />
               Add Your First System
