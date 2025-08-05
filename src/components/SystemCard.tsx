@@ -43,6 +43,7 @@ interface SystemCardProps {
   onAddSubsystem: (systemId: string, subsystemName: string) => void;
   onDeleteSystem: (systemId: string) => void;
   onDeleteSubsystem: (systemId: string, subsystemId: string) => void;
+  isAdmin: boolean;
 }
 
 const SystemCard = ({ 
@@ -51,7 +52,8 @@ const SystemCard = ({
   onLockSystem, 
   onAddSubsystem, 
   onDeleteSystem, 
-  onDeleteSubsystem 
+  onDeleteSubsystem,
+  isAdmin 
 }: SystemCardProps) => {
   const [showAddSubsystem, setShowAddSubsystem] = useState(false);
   const [subsystemName, setSubsystemName] = useState("");
@@ -93,12 +95,13 @@ const SystemCard = ({
             >
               {getStatusText(system.isLocked, system.lockedBy)}
             </Badge>
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </AlertDialogTrigger>
+            {isAdmin && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
                   <AlertDialogTitle>Delete System</AlertDialogTitle>
@@ -117,6 +120,7 @@ const SystemCard = ({
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
+            )}
           </div>
         </div>
         <p className="text-sm text-slate-600 mt-1">{system.description}</p>
@@ -205,12 +209,13 @@ const SystemCard = ({
                         <LockOpen className="h-3 w-3" />
                       )}
                     </Button>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
-                      </AlertDialogTrigger>
+                    {isAdmin && (
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </AlertDialogTrigger>
                       <AlertDialogContent>
                         <AlertDialogHeader>
                           <AlertDialogTitle>Delete Subsystem</AlertDialogTitle>
@@ -229,6 +234,7 @@ const SystemCard = ({
                         </AlertDialogFooter>
                       </AlertDialogContent>
                     </AlertDialog>
+                    )}
                   </div>
                 </div>
               ))}
@@ -236,7 +242,7 @@ const SystemCard = ({
           </div>
         )}
 
-        {system.subsystems.length < 8 && (
+        {system.subsystems.length < 8 && isAdmin && (
           <div className="space-y-2">
             {!showAddSubsystem ? (
               <Button

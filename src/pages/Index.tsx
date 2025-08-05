@@ -306,13 +306,15 @@ const Index = () => {
                 Admin Panel
               </Button>
             )}
-            <Button 
-              onClick={() => setIsAddDialogOpen(true)}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground"
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Add System
-            </Button>
+            {isAdmin && (
+              <Button 
+                onClick={() => setIsAddDialogOpen(true)}
+                className="bg-primary hover:bg-primary/90 text-primary-foreground"
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Add System
+              </Button>
+            )}
             <Button 
               onClick={signOut}
               variant="outline"
@@ -334,6 +336,7 @@ const Index = () => {
               onAddSubsystem={handleAddSubsystem}
               onDeleteSystem={handleDeleteSystem}
               onDeleteSubsystem={handleDeleteSubsystem}
+              isAdmin={isAdmin}
             />
           ))}
         </div>
@@ -345,15 +348,17 @@ const Index = () => {
               No Systems Available
             </h3>
             <p className="text-slate-500 mb-6">
-              Add your first system to get started with resource management.
+              {isAdmin ? "Add your first system to get started with resource management." : "No systems available. Contact an admin to add systems."}
             </p>
-            <Button 
-              onClick={() => setIsAddDialogOpen(true)}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground"
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Add Your First System
-            </Button>
+            {isAdmin && (
+              <Button 
+                onClick={() => setIsAddDialogOpen(true)}
+                className="bg-primary hover:bg-primary/90 text-primary-foreground"
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Add Your First System
+              </Button>
+            )}
           </div>
         )}
 
