@@ -1,268 +1,32 @@
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Plus, LogOut, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { useSystems } from "@/hooks/useSystems";
 import SystemCard from "@/components/SystemCard";
 import AddSystemDialog from "@/components/AddSystemDialog";
-import UserSelector from "@/components/UserSelector";
-
-interface SubSystem {
-  id: string;
-  name: string;
-  isLocked: boolean;
-  lockedBy: string | null;
-  lockedAt: Date | null;
-}
-
-interface System {
-  id: string;
-  name: string;
-  description: string;
-  isLocked: boolean;
-  lockedBy: string | null;
-  lockedAt: Date | null;
-  subsystems: SubSystem[];
-}
 
 const Index = () => {
-  const { user, loading, isAdmin, signOut } = useAuth();
+  const { user, loading: authLoading, isAdmin, signOut } = useAuth();
+  const { 
+    systems, 
+    loading: systemsLoading, 
+    addSystem, 
+    addSubsystem, 
+    lockSystem, 
+    deleteSystem, 
+    deleteSubsystem 
+  } = useSystems();
   const navigate = useNavigate();
-  const [systems, setSystems] = useState<System[]>([
-    {
-      id: "1",
-      name: "Production Server Alpha",
-      description: "Main production environment for web applications",
-      isLocked: false,
-      lockedBy: null,
-      lockedAt: null,
-      subsystems: [
-        {
-          id: "1-1",
-          name: "Database Cluster",
-          isLocked: true,
-          lockedBy: "john.doe@example.com",
-          lockedAt: new Date(Date.now() - 2 * 60 * 60 * 1000)
-        },
-        {
-          id: "1-2",
-          name: "Web Server Pool",
-          isLocked: false,
-          lockedBy: null,
-          lockedAt: null
-        }
-      ]
-    },
-    {
-      id: "2",
-      name: "Development Environment",
-      description: "Isolated development and testing environment",
-      isLocked: false,
-      lockedBy: null,
-      lockedAt: null,
-      subsystems: [
-        {
-          id: "2-1",
-          name: "Test Database",
-          isLocked: false,
-          lockedBy: null,
-          lockedAt: null
-        }
-      ]
-    }
-  ]);
-
-  const [currentUser, setCurrentUser] = useState<string>("");
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 
   useEffect(() => {
-    if (!loading && !user) {
+    if (!authLoading && !user) {
       navigate('/auth');
-    } else if (user) {
-      setCurrentUser(user.email || '');
     }
-  }, [user, loading, navigate]);
+  }, [user, authLoading, navigate]);
 
-  const handleLockSystem = (systemId: string, isSubsystem: boolean = false, parentId?: string) => {
-    setSystems(prevSystems => 
-      prevSystems.map(system => {
-        if (!isSubsystem && system.id === systemId) {
-          if (system.isLocked) {
-            if (system.lockedBy === currentUser) {
-              toast({
-                title: "System Unlocked",
-                description: `${system.name} is now available for others to use.`
-              });
-              return {
-                ...system,
-                isLocked: false,
-                lockedBy: null,
-                lockedAt: null
-              };
-            } else {
-              toast({
-                title: "Access Denied",
-                description: `This system is locked by ${system.lockedBy}`,
-                variant: "destructive"
-              });
-              return system;
-            }
-          } else {
-            toast({
-              title: "System Locked",
-              description: `${system.name} is now locked for your exclusive use.`
-            });
-            return {
-              ...system,
-              isLocked: true,
-              lockedBy: currentUser,
-              lockedAt: new Date()
-            };
-          }
-        } else if (isSubsystem && system.id === parentId) {
-          return {
-            ...system,
-            subsystems: system.subsystems.map(subsystem => {
-              if (subsystem.id === systemId) {
-                if (subsystem.isLocked) {
-                  if (subsystem.lockedBy === currentUser) {
-                    toast({
-                      title: "Subsystem Unlocked",
-                      description: `${subsystem.name} is now available.`
-                    });
-                    return {
-                      ...subsystem,
-                      isLocked: false,
-                      lockedBy: null,
-                      lockedAt: null
-                    };
-                  } else {
-                    toast({
-                      title: "Access Denied",
-                      description: `This subsystem is locked by ${subsystem.lockedBy}`,
-                      variant: "destructive"
-                    });
-                    return subsystem;
-                  }
-                } else {
-                  toast({
-                    title: "Subsystem Locked",
-                    description: `${subsystem.name} is now locked for your use.`
-                  });
-                  return {
-                    ...subsystem,
-                    isLocked: true,
-                    lockedBy: currentUser,
-                    lockedAt: new Date()
-                  };
-                }
-              }
-              return subsystem;
-            })
-          };
-        }
-        return system;
-      })
-    );
-  };
-
-  const handleDeleteSystem = (systemId: string) => {
-    setSystems(prevSystems => {
-      const systemToDelete = prevSystems.find(system => system.id === systemId);
-      const updatedSystems = prevSystems.filter(system => system.id !== systemId);
-      
-      if (systemToDelete) {
-        toast({
-          title: "System Deleted",
-          description: `${systemToDelete.name} has been permanently deleted.`,
-        });
-      }
-      
-      return updatedSystems;
-    });
-  };
-
-  const handleDeleteSubsystem = (systemId: string, subsystemId: string) => {
-    setSystems(prevSystems => 
-      prevSystems.map(system => {
-        if (system.id === systemId) {
-          const subsystemToDelete = system.subsystems.find(sub => sub.id === subsystemId);
-          const updatedSubsystems = system.subsystems.filter(sub => sub.id !== subsystemId);
-          
-          if (subsystemToDelete) {
-            toast({
-              title: "Subsystem Deleted",
-              description: `${subsystemToDelete.name} has been permanently deleted.`,
-            });
-          }
-          
-          return {
-            ...system,
-            subsystems: updatedSubsystems
-          };
-        }
-        return system;
-      })
-    );
-  };
-
-  const handleAddSystem = (name: string, description: string) => {
-    const newSystem: System = {
-      id: Date.now().toString(),
-      name,
-      description,
-      isLocked: false,
-      lockedBy: null,
-      lockedAt: null,
-      subsystems: []
-    };
-
-    setSystems(prev => [...prev, newSystem]);
-    setIsAddDialogOpen(false);
-    toast({
-      title: "System Added",
-      description: `${name} has been added to the system list.`
-    });
-  };
-
-  const handleAddSubsystem = (systemId: string, subsystemName: string) => {
-    setSystems(prevSystems => 
-      prevSystems.map(system => {
-        if (system.id === systemId) {
-          if (system.subsystems.length >= 8) {
-            toast({
-              title: "Limit Reached",
-              description: "Maximum of 8 subsystems allowed per system.",
-              variant: "destructive"
-            });
-            return system;
-          }
-
-          const newSubsystem: SubSystem = {
-            id: `${systemId}-${Date.now()}`,
-            name: subsystemName,
-            isLocked: false,
-            lockedBy: null,
-            lockedAt: null
-          };
-
-          toast({
-            title: "Subsystem Added",
-            description: `${subsystemName} has been added to ${system.name}.`
-          });
-
-          return {
-            ...system,
-            subsystems: [...system.subsystems, newSubsystem]
-          };
-        }
-        return system;
-      })
-    );
-  };
-
-  if (loading) {
+  if (authLoading || systemsLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center">
         <div className="text-center">
@@ -306,15 +70,6 @@ const Index = () => {
                 Admin Panel
               </Button>
             )}
-            {isAdmin && (
-              <Button 
-                onClick={() => setIsAddDialogOpen(true)}
-                className="bg-primary hover:bg-primary/90 text-primary-foreground"
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                Add System
-              </Button>
-            )}
             <Button 
               onClick={signOut}
               variant="outline"
@@ -331,11 +86,11 @@ const Index = () => {
             <SystemCard
               key={system.id}
               system={system}
-              currentUser={currentUser}
-              onLockSystem={handleLockSystem}
-              onAddSubsystem={handleAddSubsystem}
-              onDeleteSystem={handleDeleteSystem}
-              onDeleteSubsystem={handleDeleteSubsystem}
+              currentUser={user?.email || ''}
+              onLockSystem={(id, isSubsystem) => lockSystem(id, isSubsystem)}
+              onAddSubsystem={addSubsystem}
+              onDeleteSystem={deleteSystem}
+              onDeleteSubsystem={(_, subsystemId) => deleteSubsystem(subsystemId)}
               isAdmin={isAdmin}
             />
           ))}
@@ -351,22 +106,20 @@ const Index = () => {
               {isAdmin ? "Add your first system to get started with resource management." : "No systems available. Contact an admin to add systems."}
             </p>
             {isAdmin && (
-              <Button 
-                onClick={() => setIsAddDialogOpen(true)}
-                className="bg-primary hover:bg-primary/90 text-primary-foreground"
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                Add Your First System
-              </Button>
+              <AddSystemDialog
+                onAddSystem={(name, description) => addSystem(name, description)}
+              />
             )}
           </div>
         )}
 
-        <AddSystemDialog
-          isOpen={isAddDialogOpen}
-          onClose={() => setIsAddDialogOpen(false)}
-          onAdd={handleAddSystem}
-        />
+        {isAdmin && systems.length > 0 && (
+          <div className="fixed bottom-6 right-6">
+            <AddSystemDialog
+              onAddSystem={(name, description) => addSystem(name, description)}
+            />
+          </div>
+        )}
       </div>
     </div>
   );

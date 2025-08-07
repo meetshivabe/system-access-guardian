@@ -1,38 +1,46 @@
-
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Plus } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 
 interface AddSystemDialogProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onAdd: (name: string, description: string) => void;
+  onAddSystem: (name: string, description: string) => void;
 }
 
-const AddSystemDialog = ({ isOpen, onClose, onAdd }: AddSystemDialogProps) => {
+const AddSystemDialog = ({ onAddSystem }: AddSystemDialogProps) => {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [open, setOpen] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (name.trim()) {
-      onAdd(name.trim(), description.trim());
+      onAddSystem(name.trim(), description.trim());
+      setName("");
+      setDescription("");
+      setOpen(false);
+    }
+  };
+
+  const handleOpenChange = (isOpen: boolean) => {
+    setOpen(isOpen);
+    if (!isOpen) {
       setName("");
       setDescription("");
     }
   };
 
-  const handleClose = () => {
-    setName("");
-    setDescription("");
-    onClose();
-  };
-
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogTrigger asChild>
+        <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+          <Plus className="mr-2 h-4 w-4" />
+          Add System
+        </Button>
+      </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold">Add New System</DialogTitle>
@@ -69,7 +77,7 @@ const AddSystemDialog = ({ isOpen, onClose, onAdd }: AddSystemDialogProps) => {
             <Button type="submit" className="flex-1 bg-blue-600 hover:bg-blue-700 text-white">
               Add System
             </Button>
-            <Button type="button" variant="outline" onClick={handleClose} className="flex-1">
+            <Button type="button" variant="outline" onClick={() => setOpen(false)} className="flex-1">
               Cancel
             </Button>
           </div>
