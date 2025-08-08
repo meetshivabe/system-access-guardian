@@ -162,7 +162,7 @@ export const useSystems = () => {
       const currentLockedBy = current?.locked_by;
 
       // Determine new lock state
-      const newLockState = !isCurrentlyLocked ? true : false; // If unlocked, lock it. If locked, unlock it.
+      const newLockState = !isCurrentlyLocked; // Toggle the current state
       const newLockedBy = newLockState ? user.id : null;
       const newLockedAt = newLockState ? new Date().toISOString() : null;
 
