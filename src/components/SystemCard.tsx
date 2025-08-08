@@ -195,13 +195,17 @@ const SystemCard = ({
                   <div className="flex items-center gap-1 ml-2">
                     <Button
                       size="sm"
-                      variant={subsystem.isLocked && subsystem.lockedBy !== currentUser ? "destructive" : "outline"}
+                      variant={subsystem.isLocked && subsystem.lockedBy === currentUser ? "default" : "outline"}
                       onClick={() => onLockSystem(subsystem.id, true, system.id)}
                       disabled={subsystem.isLocked && subsystem.lockedBy !== currentUser}
+                      title={subsystem.isLocked ? 
+                        (subsystem.lockedBy === currentUser ? "Click to unlock" : "Locked by another user") : 
+                        "Click to lock"
+                      }
                     >
                       {subsystem.isLocked ? (
                         subsystem.lockedBy === currentUser ? (
-                          <LockOpen className="h-3 w-3" />
+                          <Lock className="h-3 w-3" />
                         ) : (
                           <Lock className="h-3 w-3" />
                         )
