@@ -139,22 +139,31 @@ const SystemCard = ({
         <Button
           onClick={() => onLockSystem(system.id)}
           className={`w-full ${
-            system.isLocked && system.lockedBy !== currentUser
+            system.isLocked && system.lockedBy !== currentUser && !isAdmin
               ? "bg-red-600 hover:bg-red-700"
-              : system.isLocked && system.lockedBy === currentUser
-              ? "bg-blue-600 hover:bg-blue-700"
+              : system.isLocked && (system.lockedBy === currentUser || isAdmin)
+              ? "bg-orange-600 hover:bg-orange-700"
               : "bg-green-600 hover:bg-green-700"
           } text-white transition-colors`}
-          disabled={system.isLocked && system.lockedBy !== currentUser}
+          disabled={system.isLocked && system.lockedBy !== currentUser && !isAdmin}
         >
           {system.isLocked ? (
             <>
-              <Lock className="mr-2 h-4 w-4" />
-              {system.lockedBy === currentUser ? "Unlock System" : "Locked"}
+              {system.lockedBy === currentUser || isAdmin ? (
+                <>
+                  <LockOpen className="mr-2 h-4 w-4" />
+                  Unlock System
+                </>
+              ) : (
+                <>
+                  <Lock className="mr-2 h-4 w-4" />
+                  Locked
+                </>
+              )}
             </>
           ) : (
             <>
-              <LockOpen className="mr-2 h-4 w-4" />
+              <Lock className="mr-2 h-4 w-4" />
               Lock System
             </>
           )}
@@ -195,22 +204,23 @@ const SystemCard = ({
                   <div className="flex items-center gap-1 ml-2">
                     <Button
                       size="sm"
-                      variant={subsystem.isLocked && subsystem.lockedBy === currentUser ? "default" : "outline"}
+                      variant={subsystem.isLocked && (subsystem.lockedBy === currentUser || isAdmin) ? "default" : "outline"}
                       onClick={() => onLockSystem(subsystem.id, true, system.id)}
-                      disabled={subsystem.isLocked && subsystem.lockedBy !== currentUser}
+                      disabled={subsystem.isLocked && subsystem.lockedBy !== currentUser && !isAdmin}
                       title={subsystem.isLocked ? 
-                        (subsystem.lockedBy === currentUser ? "Click to unlock" : "Locked by another user") : 
+                        (subsystem.lockedBy === currentUser || isAdmin ? "Click to unlock" : "Locked by another user") : 
                         "Click to lock"
                       }
+                      className={subsystem.isLocked && (subsystem.lockedBy === currentUser || isAdmin) ? "bg-orange-600 hover:bg-orange-700 text-white" : ""}
                     >
                       {subsystem.isLocked ? (
-                        subsystem.lockedBy === currentUser ? (
-                          <Lock className="h-3 w-3" />
+                        subsystem.lockedBy === currentUser || isAdmin ? (
+                          <LockOpen className="h-3 w-3" />
                         ) : (
                           <Lock className="h-3 w-3" />
                         )
                       ) : (
-                        <LockOpen className="h-3 w-3" />
+                        <Lock className="h-3 w-3" />
                       )}
                     </Button>
                     {isAdmin && (
