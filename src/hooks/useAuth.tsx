@@ -7,6 +7,7 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   isAdmin: boolean;
+  username: string | null;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signUp: (email: string, password: string, userData?: any) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
@@ -27,6 +28,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [username, setUsername] = useState<string | null>(null);
 
   useEffect(() => {
     // Set up auth state listener
@@ -36,9 +38,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          // Check if user is admin (deferred to avoid recursion)
+          // Check if user is admin and get username (deferred to avoid recursion)
           setTimeout(async () => {
             try {
+              // Get user profile with username
+              const { data: profile } = await supabase
+                .from('profiles')
+                .select('username')
+                .eq('id', session.user.id)
+                .single();
+                
+              setUsername(profile?.username || null);
+              
+              // Check if user is admin
               const { data: roles } = await supabase
                 .from('user_roles')
                 .select('role')
@@ -49,10 +61,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               setIsAdmin(!!roles);
             } catch (error) {
               setIsAdmin(false);
+              setUsername(null);
             }
           }, 0);
         } else {
           setIsAdmin(false);
+          setUsername(null);
         }
         
         setLoading(false);
@@ -100,6 +114,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     session,
     loading,
     isAdmin,
+    username,
     signIn,
     signUp,
     signOut,

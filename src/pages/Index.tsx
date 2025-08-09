@@ -8,7 +8,7 @@ import SystemCard from "@/components/SystemCard";
 import AddSystemDialog from "@/components/AddSystemDialog";
 
 const Index = () => {
-  const { user, loading: authLoading, isAdmin, signOut } = useAuth();
+  const { user, loading: authLoading, isAdmin, username, signOut } = useAuth();
   const { 
     systems, 
     loading: systemsLoading, 
@@ -86,7 +86,7 @@ const Index = () => {
             <SystemCard
               key={system.id}
               system={system}
-              currentUser={user?.email || ''}
+              currentUser={username || ''}
               onLockSystem={(id, isSubsystem) => lockSystem(id, isSubsystem)}
               onAddSubsystem={addSubsystem}
               onDeleteSystem={deleteSystem}
