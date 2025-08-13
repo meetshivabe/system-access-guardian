@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useSystems } from "@/hooks/useSystems";
 import SystemCard from "@/components/SystemCard";
 import AddSystemDialog from "@/components/AddSystemDialog";
+import UtilizationStats from "@/components/UtilizationStats";
 
 const Index = () => {
   const { user, loading: authLoading, isAdmin, username, signOut } = useAuth();
@@ -70,6 +71,7 @@ const Index = () => {
                 Admin Panel
               </Button>
             )}
+            <UtilizationStats />
             <Button 
               onClick={signOut}
               variant="outline"

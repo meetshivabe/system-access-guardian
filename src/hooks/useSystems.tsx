@@ -166,6 +166,55 @@ export const useSystems = () => {
       const newLockedBy = newLockState ? user.id : null;
       const newLockedAt = newLockState ? new Date().toISOString() : null;
 
+      // Handle utilization tracking
+      if (newLockState) {
+        // Locking - start utilization tracking
+        if (isSubsystem) {
+          // Get parent system ID for subsystem
+          const { data: subsystemData } = await supabase
+            .from('subsystems')
+            .select('system_id')
+            .eq('id', systemId)
+            .single();
+          
+          if (subsystemData) {
+            await supabase
+              .from('subsystem_utilization')
+              .insert({
+                subsystem_id: systemId,
+                system_id: subsystemData.system_id,
+                user_id: user.id,
+                locked_at: new Date().toISOString(),
+              });
+          }
+        } else {
+          await supabase
+            .from('system_utilization')
+            .insert({
+              system_id: systemId,
+              user_id: user.id,
+              locked_at: new Date().toISOString(),
+            });
+        }
+      } else {
+        // Unlocking - end utilization tracking
+        if (isSubsystem) {
+          await supabase
+            .from('subsystem_utilization')
+            .update({ unlocked_at: new Date().toISOString() })
+            .eq('subsystem_id', systemId)
+            .eq('user_id', user.id)
+            .is('unlocked_at', null);
+        } else {
+          await supabase
+            .from('system_utilization')
+            .update({ unlocked_at: new Date().toISOString() })
+            .eq('system_id', systemId)
+            .eq('user_id', user.id)
+            .is('unlocked_at', null);
+        }
+      }
+
       const { error } = await supabase
         .from(table)
         .update({

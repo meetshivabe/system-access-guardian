@@ -50,6 +50,54 @@ export type Database = {
         }
         Relationships: []
       }
+      subsystem_utilization: {
+        Row: {
+          created_at: string
+          duration_minutes: number | null
+          id: string
+          locked_at: string
+          subsystem_id: string
+          system_id: string
+          unlocked_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          duration_minutes?: number | null
+          id?: string
+          locked_at: string
+          subsystem_id: string
+          system_id: string
+          unlocked_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          duration_minutes?: number | null
+          id?: string
+          locked_at?: string
+          subsystem_id?: string
+          system_id?: string
+          unlocked_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subsystem_utilization_subsystem_id_fkey"
+            columns: ["subsystem_id"]
+            isOneToOne: false
+            referencedRelation: "subsystems"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subsystem_utilization_system_id_fkey"
+            columns: ["system_id"]
+            isOneToOne: false
+            referencedRelation: "systems"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subsystems: {
         Row: {
           created_at: string
@@ -91,6 +139,44 @@ export type Database = {
           },
           {
             foreignKeyName: "subsystems_system_id_fkey"
+            columns: ["system_id"]
+            isOneToOne: false
+            referencedRelation: "systems"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      system_utilization: {
+        Row: {
+          created_at: string
+          duration_minutes: number | null
+          id: string
+          locked_at: string
+          system_id: string
+          unlocked_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          duration_minutes?: number | null
+          id?: string
+          locked_at: string
+          system_id: string
+          unlocked_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          duration_minutes?: number | null
+          id?: string
+          locked_at?: string
+          system_id?: string
+          unlocked_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "system_utilization_system_id_fkey"
             columns: ["system_id"]
             isOneToOne: false
             referencedRelation: "systems"

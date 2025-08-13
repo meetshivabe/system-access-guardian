@@ -206,12 +206,23 @@ const SystemCard = ({
                       size="sm"
                       variant={subsystem.isLocked && (subsystem.lockedBy === currentUser || isAdmin) ? "default" : "outline"}
                       onClick={() => onLockSystem(subsystem.id, true, system.id)}
-                      disabled={subsystem.isLocked && subsystem.lockedBy !== currentUser && !isAdmin}
-                      title={subsystem.isLocked ? 
-                        (subsystem.lockedBy === currentUser || isAdmin ? "Click to unlock" : "Locked by another user") : 
-                        "Click to lock"
+                      disabled={
+                        system.isLocked || // Disable if parent system is locked
+                        (subsystem.isLocked && subsystem.lockedBy !== currentUser && !isAdmin)
                       }
-                      className={subsystem.isLocked && (subsystem.lockedBy === currentUser || isAdmin) ? "bg-orange-600 hover:bg-orange-700 text-white" : ""}
+                      title={
+                        system.isLocked ? 
+                          "Cannot access subsystem while main system is locked" :
+                          subsystem.isLocked ? 
+                            (subsystem.lockedBy === currentUser || isAdmin ? "Click to unlock" : "Locked by another user") : 
+                            "Click to lock"
+                      }
+                      className={
+                        system.isLocked ? 
+                          "opacity-50 cursor-not-allowed" :
+                          subsystem.isLocked && (subsystem.lockedBy === currentUser || isAdmin) ? 
+                            "bg-orange-600 hover:bg-orange-700 text-white" : ""
+                      }
                     >
                       {subsystem.isLocked ? (
                         subsystem.lockedBy === currentUser || isAdmin ? (
