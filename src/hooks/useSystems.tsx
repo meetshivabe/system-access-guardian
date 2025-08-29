@@ -296,6 +296,33 @@ export const useSystems = () => {
     }
   };
 
+  const updateSystemDescription = async (systemId: string, description: string) => {
+    if (!user) return;
+
+    try {
+      const { error } = await supabase
+        .from('systems')
+        .update({ description })
+        .eq('id', systemId);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Success',
+        description: 'System description updated successfully',
+      });
+
+      fetchSystems();
+    } catch (error) {
+      console.error('Error updating system description:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to update system description',
+        variant: 'destructive',
+      });
+    }
+  };
+
   return {
     systems,
     loading,
@@ -304,6 +331,7 @@ export const useSystems = () => {
     lockSystem,
     deleteSystem,
     deleteSubsystem,
+    updateSystemDescription,
     refetch: fetchSystems
   };
 };

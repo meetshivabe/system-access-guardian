@@ -123,7 +123,7 @@ const SystemCard = ({
             )}
           </div>
         </div>
-        <p className="text-sm text-slate-600 mt-1">{system.description}</p>
+        <p className="text-sm text-slate-600 mt-1 whitespace-pre-wrap">{system.description}</p>
         
         {system.isLocked && system.lockedBy && system.lockedAt && (
           <div className="flex items-center gap-2 text-xs text-slate-500 mt-2">
