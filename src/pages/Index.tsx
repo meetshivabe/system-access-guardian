@@ -1,12 +1,14 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, LogOut, Shield } from "lucide-react";
+import { Plus, LogOut, Shield, Key } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useSystems } from "@/hooks/useSystems";
 import SystemCard from "@/components/SystemCard";
 import AddSystemDialog from "@/components/AddSystemDialog";
 import UtilizationStats from "@/components/UtilizationStats";
+import UserBookings from "@/components/UserBookings";
+import PasswordChangeModal from "@/components/PasswordChangeModal";
 
 const Index = () => {
   const { user, loading: authLoading, isAdmin, username, signOut } = useAuth();
@@ -15,11 +17,16 @@ const Index = () => {
     loading: systemsLoading, 
     addSystem, 
     addSubsystem, 
-    lockSystem, 
+    lockSystem,
+    bookSystem,
     deleteSystem, 
-    deleteSubsystem 
+    deleteSubsystem,
+    updateSystemDescription,
+    updateSystemName,
+    updateSubsystemName
   } = useSystems();
   const navigate = useNavigate();
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -51,7 +58,7 @@ const Index = () => {
               System Resource Manager
             </h1>
             <p className="text-slate-600 text-lg">
-              Manage and allocate shared Linux systems efficiently
+              Manage and allocate shared systems efficiently
             </p>
           </div>
           
@@ -73,6 +80,15 @@ const Index = () => {
             )}
             <UtilizationStats />
             <Button 
+              onClick={() => setShowPasswordModal(true)}
+              variant="outline"
+              className="border-blue-500 text-blue-600 hover:bg-blue-50"
+              title="Change Password"
+            >
+              <Key className="mr-2 h-4 w-4" />
+              Change Password
+            </Button>
+            <Button 
               onClick={signOut}
               variant="outline"
               className="border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
@@ -83,37 +99,52 @@ const Index = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-          {systems.map((system) => (
-            <SystemCard
-              key={system.id}
-              system={system}
-              currentUser={username || ''}
-              onLockSystem={(id, isSubsystem) => lockSystem(id, isSubsystem)}
-              onAddSubsystem={addSubsystem}
-              onDeleteSystem={deleteSystem}
-              onDeleteSubsystem={(_, subsystemId) => deleteSubsystem(subsystemId)}
-              isAdmin={isAdmin}
-            />
-          ))}
-        </div>
+        <div className="flex flex-col-reverse lg:flex-row gap-6">
+          {/* Main Content Area */}
+          <div className="flex-1">
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+              {systems.map((system) => (
+                <SystemCard
+                  key={system.id}
+                  system={system}
+                  currentUser={username || ''}
+                  onBookSystem={bookSystem}
+                  onAddSubsystem={addSubsystem}
+                  onDeleteSystem={deleteSystem}
+                  onDeleteSubsystem={(_, subsystemId) => deleteSubsystem(subsystemId)}
+                  onUpdateDescription={isAdmin ? updateSystemDescription : undefined}
+                  onUpdateSystemName={isAdmin ? updateSystemName : undefined}
+                  onUpdateSubsystemName={isAdmin ? updateSubsystemName : undefined}
+                  isAdmin={isAdmin}
+                />
+              ))}
+            </div>
 
-        {systems.length === 0 && (
-          <div className="text-center py-12">
-            <div className="text-slate-400 text-6xl mb-4">🖥️</div>
-            <h3 className="text-xl font-semibold text-slate-600 mb-2">
-              No Systems Available
-            </h3>
-            <p className="text-slate-500 mb-6">
-              {isAdmin ? "Add your first system to get started with resource management." : "No systems available. Contact an admin to add systems."}
-            </p>
-            {isAdmin && (
-              <AddSystemDialog
-                onAddSystem={(name, description) => addSystem(name, description)}
-              />
+            {systems.length === 0 && (
+              <div className="text-center py-12">
+                <div className="text-slate-400 text-6xl mb-4">🖥️</div>
+                <h3 className="text-xl font-semibold text-slate-600 mb-2">
+                  No Systems Available
+                </h3>
+                <p className="text-slate-500 mb-6">
+                  {isAdmin ? "Add your first system to get started with resource management." : "No systems available. Contact an admin to add systems."}
+                </p>
+                {isAdmin && (
+                  <AddSystemDialog
+                    onAddSystem={(name, description) => addSystem(name, description)}
+                  />
+                )}
+              </div>
             )}
           </div>
-        )}
+
+          {/* Sidebar - My Bookings */}
+          <div className="w-full lg:w-96">
+            <div className="sticky top-4">
+              <UserBookings />
+            </div>
+          </div>
+        </div>
 
         {isAdmin && systems.length > 0 && (
           <div className="fixed bottom-6 right-6">
@@ -122,6 +153,13 @@ const Index = () => {
             />
           </div>
         )}
+        
+        {/* Password Change Modal */}
+        <PasswordChangeModal
+          isOpen={showPasswordModal}
+          onClose={() => setShowPasswordModal(false)}
+          isAdminReset={false}
+        />
       </div>
     </div>
   );

@@ -6,11 +6,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from '@/hooks/use-toast';
-import { Users, UserPlus, Shield, Trash2, Edit, Server, Save, X } from 'lucide-react';
+import { Users, UserPlus, Shield, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Textarea } from '@/components/ui/textarea';
+import AdminBookingsList from '@/components/AdminBookingsList';
+import PasswordChangeModal from '@/components/PasswordChangeModal';
+import { Key } from 'lucide-react';
 
 interface User {
   id: string;
@@ -23,30 +25,22 @@ interface User {
   user_roles: { role: string }[];
 }
 
-interface System {
-  id: string;
-  name: string;
-  description: string | null;
-  created_at: string;
-}
 
 const Admin = () => {
   const { isAdmin, user: currentUser } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
-  const [systems, setSystems] = useState<System[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [role, setRole] = useState<'user' | 'admin'>('user');
-  const [editingSystem, setEditingSystem] = useState<string | null>(null);
-  const [systemDescriptions, setSystemDescriptions] = useState<{ [key: string]: string }>({});
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [passwordResetTarget, setPasswordResetTarget] = useState<User | null>(null);
 
   useEffect(() => {
     if (isAdmin) {
       fetchUsers();
-      fetchSystems();
     }
   }, [isAdmin]);
 
@@ -210,75 +204,6 @@ const Admin = () => {
     }
   };
 
-  const fetchSystems = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('systems')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-
-      setSystems(data || []);
-      
-      const descriptions: { [key: string]: string } = {};
-      (data || []).forEach(system => {
-        descriptions[system.id] = system.description || '';
-      });
-      setSystemDescriptions(descriptions);
-    } catch (error) {
-      console.error('Error fetching systems:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to fetch systems.',
-        variant: 'destructive',
-      });
-    }
-  };
-
-  const updateSystemDescription = async (systemId: string) => {
-    try {
-      const { error } = await supabase
-        .from('systems')
-        .update({ description: systemDescriptions[systemId] })
-        .eq('id', systemId);
-
-      if (error) throw error;
-
-      toast({
-        title: 'Success',
-        description: 'System description updated successfully.',
-      });
-
-      setEditingSystem(null);
-      fetchSystems();
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to update system description.';
-      toast({
-        title: 'Error',
-        description: errorMessage,
-        variant: 'destructive',
-      });
-    }
-  };
-
-  const handleDescriptionChange = (systemId: string, value: string) => {
-    setSystemDescriptions(prev => ({
-      ...prev,
-      [systemId]: value
-    }));
-  };
-
-  const cancelEdit = (systemId: string) => {
-    const system = systems.find(s => s.id === systemId);
-    if (system) {
-      setSystemDescriptions(prev => ({
-        ...prev,
-        [systemId]: system.description || ''
-      }));
-    }
-    setEditingSystem(null);
-  };
 
   if (!isAdmin) {
     return (
@@ -310,7 +235,7 @@ const Admin = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           {/* Create User Form */}
           <Card>
             <CardHeader>
@@ -441,6 +366,18 @@ const Admin = () => {
                                   {hasAdminRole ? 'Remove Admin' : 'Make Admin'}
                                 </Button>
                                 
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => {
+                                    setPasswordResetTarget(user);
+                                    setShowPasswordModal(true);
+                                  }}
+                                  title="Reset Password"
+                                >
+                                  <Key className="h-4 w-4" />
+                                </Button>
+                                
                                 <AlertDialog>
                                   <AlertDialogTrigger asChild>
                                     <Button variant="destructive" size="sm">
@@ -478,92 +415,20 @@ const Admin = () => {
           </div>
         </div>
 
-        {/* Systems Management Section */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Server className="h-5 w-5" />
-              Systems Management
-            </CardTitle>
-            <CardDescription>
-              Edit system descriptions and manage system configurations
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {systems.length === 0 ? (
-              <div className="text-center py-8 text-slate-500">
-                No systems found
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {systems.map((system) => (
-                  <div
-                    key={system.id}
-                    className="p-4 border rounded-lg bg-card"
-                  >
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="flex-1">
-                        <h3 className="font-medium text-foreground">
-                          {system.name}
-                        </h3>
-                        <p className="text-xs text-muted-foreground">
-                          Created: {new Date(system.created_at).toLocaleDateString()}
-                        </p>
-                      </div>
-                      {editingSystem !== system.id && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setEditingSystem(system.id)}
-                        >
-                          <Edit className="h-4 w-4 mr-1" />
-                          Edit Description
-                        </Button>
-                      )}
-                    </div>
-                    
-                    {editingSystem === system.id ? (
-                      <div className="space-y-2">
-                        <Label htmlFor={`desc-${system.id}`}>Description</Label>
-                        <Textarea
-                          id={`desc-${system.id}`}
-                          value={systemDescriptions[system.id]}
-                          onChange={(e) => handleDescriptionChange(system.id, e.target.value)}
-                          placeholder="Enter system description..."
-                          className="min-h-[100px]"
-                        />
-                        <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            onClick={() => updateSystemDescription(system.id)}
-                          >
-                            <Save className="h-4 w-4 mr-1" />
-                            Save
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => cancelEdit(system.id)}
-                          >
-                            <X className="h-4 w-4 mr-1" />
-                            Cancel
-                          </Button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="mt-2">
-                        <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-                          {system.description || 'No description available'}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        {/* Bookings Management Section */}
+        <AdminBookingsList />
       </div>
+      
+      {/* Password Change Modal */}
+      <PasswordChangeModal
+        isOpen={showPasswordModal}
+        onClose={() => {
+          setShowPasswordModal(false);
+          setPasswordResetTarget(null);
+        }}
+        targetUser={passwordResetTarget}
+        isAdminReset={true}
+      />
     </div>
   );
 };
